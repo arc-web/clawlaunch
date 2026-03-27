@@ -186,6 +186,12 @@ You can! And for some workloads (high-volume, bursty, commercial) API keys are t
 
 ---
 
+## Recommended: Cut Token Usage Too
+
+Flat-rate billing doesn't mean you should waste tokens. [lean-ctx](https://github.com/arc-web/lean-ctx) is a compression layer that sits between your agent and shell/file operations - 34-99% token reduction on command output. Fewer tokens per call = more calls before you hit Max rate limits.
+
+---
+
 ## Contributing
 
 Found a bug? TOS changed? Better way to handle token rotation? Open an issue or PR.
