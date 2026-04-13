@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clawlaunch</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #07070F;
+  --surface: #0F0F1A;
+  --surface2: #16162A;
+  --border: rgba(255,255,255,0.07);
+  --text: #F0EEFF;
+  --muted: #7A728A;
+  --primary: #7B2FBE;
+  --primary-light: #A855F7;
+  --accent: #F5A623;
+  --teal: #14B8A6;
+  --blue: #3B82F6;
+  --green: #22C55E;
+  --pink: #EC4899;
+}
+
+html, body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:-apple-system,'Inter','Segoe UI',sans-serif; overflow:hidden; }
+
+.cursor { position:fixed; width:10px; height:10px; background:var(--accent); border-radius:50%; pointer-events:none; z-index:9999; mix-blend-mode:screen; transform:translate(-50%,-50%); }
+.cursor-ring { position:fixed; width:36px; height:36px; border:1px solid rgba(245,166,35,0.35); border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%); }
+
+#slides { width:100vw; height:100vh; position:relative; overflow:hidden; }
+.slide { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; opacity:0; pointer-events:none; }
+.slide.active { opacity:1; pointer-events:all; }
+
+canvas#bg { position:fixed; inset:0; z-index:0; pointer-events:none; }
+.slide-content { position:relative; z-index:2; width:min(1100px, calc(100vw - 120px)); margin:0 auto; text-align:center; }
+
+.eyebrow { font-size:12px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:20px; opacity:0; }
+h1 { font-size:clamp(40px,6vw,80px); font-weight:800; line-height:1.0; letter-spacing:-0.03em; margin-bottom:28px; opacity:0; max-width:100%; overflow-wrap:break-word; }
+h2 { font-size:clamp(32px,4.5vw,58px); font-weight:700; line-height:1.1; letter-spacing:-0.02em; margin-bottom:20px; opacity:0; max-width:100%; overflow-wrap:break-word; }
+.sub { font-size:clamp(15px,1.8vw,20px); color:var(--muted); line-height:1.65; max-width:700px; margin:0 auto 36px; opacity:0; }
+
+.grad { background:linear-gradient(135deg,var(--primary-light),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+.line { width:48px; height:3px; background:linear-gradient(90deg,var(--primary),var(--accent)); border-radius:2px; margin:0 auto 28px; opacity:0; }
+
+.blob { position:absolute; border-radius:50%; filter:blur(90px); pointer-events:none; z-index:1; }
+
+/* Hero */
+.hero-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(123,47,190,0.15); border:1px solid rgba(123,47,190,0.4); border-radius:100px; padding:8px 20px; font-size:13px; font-weight:600; color:var(--primary-light); margin-bottom:32px; opacity:0; }
+.hero-badge::before { content:''; width:8px; height:8px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+.tag { display:inline-block; padding:6px 16px; border-radius:100px; font-size:13px; font-weight:600; letter-spacing:0.05em; border:1px solid rgba(123,47,190,0.5); background:rgba(123,47,190,0.1); color:var(--primary-light); margin:4px; opacity:0; }
+.tags-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; opacity:0; }
+
+/* Cards */
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; width:100%; margin:20px auto 0; justify-content:center; }
+.card { background:var(--surface); border:1px solid rgba(123,47,190,0.3); border-radius:16px; padding:28px 24px; text-align:left; opacity:0; position:relative; overflow:hidden; transition:border-color 0.3s; }
+.card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(123,47,190,0.08),transparent 60%); pointer-events:none; }
+.card:hover { border-color:rgba(245,166,35,0.5); }
+.card-icon { font-size:32px; margin-bottom:12px; display:block; }
+.card-title { font-size:16px; font-weight:700; margin-bottom:8px; }
+.card-desc { font-size:13px; color:var(--muted); line-height:1.5; }
+
+/* Stats */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:32px; margin:32px auto 0; text-align:center; }
+.stat { opacity:0; }
+.stat-number { font-size:clamp(48px,6vw,80px); font-weight:800; letter-spacing:-0.04em; line-height:1; background:linear-gradient(135deg,var(--primary-light),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.stat-label { font-size:14px; color:var(--muted); margin-top:8px; text-transform:uppercase; letter-spacing:0.1em; }
+
+/* Steps */
+.steps { display:flex; flex-direction:column; gap:16px; text-align:left; max-width:640px; width:100%; margin:0 auto; }
+.step { display:flex; align-items:flex-start; gap:20px; background:var(--surface); border:1px solid rgba(123,47,190,0.2); border-radius:14px; padding:20px 24px; opacity:0; }
+.step-num { font-size:13px; font-weight:700; color:var(--accent); background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.3); border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.step-text { font-size:16px; line-height:1.5; }
+.step-text strong { font-weight:700; }
+
+/* Compare */
+.compare { display:grid; grid-template-columns:1fr 1fr; gap:24px; width:100%; margin-top:16px; text-align:left; }
+.compare-col { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; opacity:0; }
+.compare-col.good { border-color:rgba(34,197,94,0.2); }
+.compare-col.bad { border-color:rgba(239,68,68,0.2); }
+.compare-head { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:700; margin-bottom:20px; }
+.check { color:var(--green); }
+.cross { color:#EF4444; }
+.compare-item { font-size:14px; color:var(--muted); line-height:1.5; padding:8px 0; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; }
+.compare-item:last-child { border-bottom:none; }
+.compare-col.good .compare-item::before { content:'\2713'; color:var(--green); font-weight:700; flex-shrink:0; }
+.compare-col.bad .compare-item::before { content:'\2717'; color:#EF4444; font-weight:700; flex-shrink:0; }
+
+/* Code */
+.code-block { background:var(--surface2); border:1px solid rgba(123,47,190,0.3); border-radius:12px; padding:24px 28px; text-align:left; font-family:'Fira Code','Cascadia Code',monospace; font-size:15px; line-height:1.7; opacity:0; margin-top:24px; }
+.code-block .comment { color:#6A6A8A; }
+.code-block .keyword { color:#C084FC; }
+.code-block .string { color:#86EFAC; }
+
+/* Flow */
+.flow { display:flex; flex-direction:column; gap:12px; width:100%; max-width:800px; margin:0 auto; text-align:left; }
+.flow-step { display:flex; gap:20px; align-items:flex-start; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 22px; opacity:0; position:relative; }
+.flow-step::after { content:'\2193'; position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); color:var(--border); font-size:14px; z-index:1; }
+.flow-step:last-child::after { display:none; }
+.flow-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.flow-body { flex:1; }
+.flow-title { font-size:15px; font-weight:700; margin-bottom:4px; }
+.flow-desc { font-size:13px; color:var(--muted); line-height:1.5; }
+.flow-prompt { font-family:'Fira Code',monospace; font-size:12px; color:#A5B4FC; margin-top:8px; background:var(--surface2); border-radius:8px; padding:8px 12px; border:1px solid var(--border); }
+
+/* Quote */
+blockquote { font-size:clamp(20px,3vw,32px); font-weight:600; line-height:1.4; position:relative; max-width:800px; margin:0 auto; padding:0 0 0 48px; opacity:0; }
+blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font-size:60px; color:var(--accent); font-family:Georgia,serif; line-height:1; }
+
+/* Text + Image */
+.body-text { font-size:16px; color:var(--muted); line-height:1.7; max-width:700px; margin:0 auto; opacity:0; }
+.img-wrap { margin-top:24px; opacity:0; }
+
+/* Nav */
+#nav { position:fixed; right:32px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:8px; z-index:100; }
+.dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.15); cursor:pointer; border:none; padding:0; transition:all 0.3s; }
+.dot.active { background:var(--accent); transform:scale(1.5); }
+#counter { position:fixed; bottom:28px; right:32px; font-size:12px; color:var(--muted); z-index:100; }
+#hint { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); font-size:11px; color:rgba(122,114,138,0.4); z-index:100; letter-spacing:0.05em; }
+#overlay { position:fixed; inset:0; background:var(--bg); z-index:50; pointer-events:none; opacity:0; }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+<div id="overlay"></div>
+
+<div id="slides">
+<div class="slide active" id="slide-1">
+    
+    <div class="blob" style="width:474.63943027130625px;height:534.4380818196471px;background:var(--primary);top:-81.13274514718486px;left:-98.30534062914683px;opacity:0.07"></div>
+    <div class="blob" style="width:385.8437479533507px;height:329.6787323861849px;background:var(--accent);bottom:-103.19412299686854px;right:-67.74399438442899px;opacity:0.06"></div>
+    <div class="slide-content">
+      <div class="hero-badge">ARC Web</div>
+      <h1>Clawlaunch</h1>
+      <div class="sub">One-stop shop for launching OpenClaw with proper Claude Max token setup. Stop burning API fees. Stay TOS compliant.</div>
+      <div class="tags-row"><span class="tag">Open Source</span><span class="tag">GitHub</span><span class="tag">Production</span></div>
+    </div>
+  </div>
+
+<div class="slide" id="slide-2">
+    
+    <div class="blob" style="width:476.85281176245616px;height:504.10111760113654px;background:var(--primary);top:-99.76217122248474px;right:-100.54551849613792px;opacity:0.07"></div>
+    <div class="blob" style="width:440.3028762393091px;height:341.57002010611956px;background:var(--accent);bottom:-117.5299598918861px;left:-52.80445709768789px;opacity:0.06"></div>
+    <div class="slide-content">
+      <div class="eyebrow">What it does</div>
+      <h2>Key <span class="grad">features</span></h2>
+      <div class="line"></div>
+      <div class="cards">
+    <div class="card">
+      <span class="card-icon">⚡</span>
+      <div class="card-title">Claude Code</div>
+      <div class="card-desc">Claude Code CLI installed locally (`claude` in ...</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">⚡</span>
+      <div class="card-title">Active **Claude</div>
+      <div class="card-desc">Active **Claude Max** subscription ($100 or $20...</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">⚡</span>
+      <div class="card-title">SSH access</div>
+      <div class="card-desc">SSH access to your VPS where OpenClaw runs</div>
+    </div></div>
+    </div>
+  </div>
+
+<div class="slide" id="slide-3">
+    
+    <div class="blob" style="width:531.3421750965933px;height:434.1161446906764px;background:var(--primary);top:-80.33282766671577px;left:-116.7906447448242px;opacity:0.07"></div>
+    <div class="blob" style="width:400.51582248813486px;height:403.161798358639px;background:var(--accent);bottom:-62.112401052073864px;right:-77.16783376661424px;opacity:0.06"></div>
+    <div class="slide-content">
+      <div class="eyebrow">By the numbers</div>
+      <h2>Repository <span class="grad">stats</span></h2>
+      <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-number">100%</div>
+      <div class="stat-label">Open Source</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">MIT</div>
+      <div class="stat-label">License</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">∞</div>
+      <div class="stat-label">Potential</div>
+    </div></div>
+      
+    </div>
+  </div>
+
+<div class="slide" id="slide-4">
+    
+    <div class="blob" style="width:531.0493260270885px;height:432.714948384757px;background:var(--primary);top:-106.60237176326996px;right:-97.43165206296246px;opacity:0.07"></div>
+    <div class="blob" style="width:328.20060484024185px;height:366.5305292785846px;background:var(--accent);bottom:-102.70755505856906px;right:-53.99889825706533px;opacity:0.06"></div>
+    <div class="slide-content">
+      <div class="eyebrow">Get started</div>
+      <h2>Clone and <span class="grad">explore</span></h2>
+      <div class="sub">Start contributing today</div>
+      <div class="code-block"><div><span class=<span class="string">"comment"</span>># Clone the repo</span></div><div>git clone https://github.com/arc-web/clawlaunch.git</div><div>cd clawlaunch</div><div></div><div><span class=<span class="string">"comment"</span>># Read the README for next steps</span></div><div>cat README.md</div></div>
+    </div>
+  </div>
+
+<div class="slide" id="slide-5">
+    
+    <div class="blob" style="width:493.87878044489077px;height:467.5848595099036px;background:var(--primary);top:-139.2659051365174px;right:-84.12873999354798px;opacity:0.07"></div>
+    <div class="blob" style="width:324.8251283276268px;height:318.9055936130739px;background:var(--accent);bottom:-109.75957537976028px;right:-74.1577684276835px;opacity:0.06"></div>
+    <div class="slide-content">
+      <blockquote>Open source software powers innovation.<br><span class="grad">Join us on GitHub.</span></blockquote>
+      <div class="line" style="margin-top:48px"></div>
+      <div class="sub">arc-web/clawlaunch</div>
+    </div>
+  </div>
+</div>
+
+<div id="nav"></div>
+<div id="counter">1 / 5</div>
+<div id="hint">\u2190 \u2192 arrow keys to navigate</div>
+
+<script>
+// Particles
+const canvas=document.getElementById('bg'),ctx=canvas.getContext('2d');let pts=[];
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight}
+resize();window.addEventListener('resize',resize);
+const pColors=['123,47,190','245,166,35','20,184,166'];
+for(let i=0;i<50;i++)pts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.2+0.3,dx:(Math.random()-0.5)*0.25,dy:(Math.random()-0.5)*0.25,a:Math.random()*0.35+0.04,c:pColors[Math.floor(Math.random()*pColors.length)]});
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba('+p.c+','+p.a+')';ctx.fill();p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>canvas.width)p.dx*=-1;if(p.y<0||p.y>canvas.height)p.dy*=-1});requestAnimationFrame(draw)}
+draw();
+
+// Cursor
+const cur=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+function animC(){cur.style.left=mx+'px';cur.style.top=my+'px';rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animC)}
+animC();
+
+// Slides
+const slides=document.querySelectorAll('.slide'),N=slides.length;
+let cur2=0,busy=false;
+const nav=document.getElementById('nav');
+for(let i=0;i<N;i++){const d=document.createElement('button');d.className='dot'+(i===0?' active':'');d.onclick=()=>go(i);nav.appendChild(d)}
+
+function updateNav(){document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===cur2));document.getElementById('counter').textContent=(cur2+1)+' / '+N}
+
+function resetSlide(s){const els=s.querySelectorAll('.eyebrow,.line,h1,h2,.sub,.card,.stat,.step,.compare-col,.code-block,blockquote,.hero-badge,.tags-row,.tag,.flow-step,.body-text,.img-wrap');gsap.set(els,{opacity:0,clearProps:'transform'})}
+
+function animIn(s,i){
+  const q=sel=>s.querySelectorAll(sel);
+  const tl=gsap.timeline({defaults:{ease:'power3.out'}});
+
+  tl.to(q('.hero-badge'),{opacity:1,y:0,duration:0.5}).from(q('.hero-badge'),{y:16},'<')
+    .to(q('.eyebrow'),{opacity:1,y:0,duration:0.5},'-=0.3').from(q('.eyebrow'),{y:16},'<')
+    .to(q('h1,h2'),{opacity:1,y:0,duration:0.7},'-=0.3').from(q('h1,h2'),{y:30},'<')
+    .to(q('.sub'),{opacity:1,y:0,duration:0.5},'-=0.2').from(q('.sub'),{y:16},'<')
+    .to(q('.line'),{opacity:1,scaleX:1,duration:0.4,transformOrigin:'left'},'-=0.2').from(q('.line'),{scaleX:0},'<')
+    .to(q('.tags-row'),{opacity:1,duration:0.4},'-=0.1');
+
+  const stagger=q('.card,.stat,.step,.flow-step');
+  if(stagger.length)tl.to(stagger,{opacity:1,y:0,duration:0.5,stagger:0.12},'-=0.1').from(stagger,{y:24},'<0.12');
+
+  const singles=q('.compare-col,.code-block,blockquote,.body-text,.img-wrap');
+  if(singles.length)tl.to(singles,{opacity:1,y:0,duration:0.6},'-=0.1').from(singles,{y:24},'<');
+
+  const tags=q('.tag');
+  if(tags.length)tl.to(tags,{opacity:1,duration:0.3,stagger:0.08},'-=0.2');
+}
+
+function go(idx){
+  if(idx===cur2||busy||idx<0||idx>=N)return;busy=true;
+  const ov=document.getElementById('overlay');
+  gsap.timeline()
+    .to(ov,{opacity:1,duration:0.2,ease:'power2.in'})
+    .call(()=>{slides[cur2].classList.remove('active');resetSlide(slides[idx]);slides[idx].classList.add('active');cur2=idx;updateNav()})
+    .to(ov,{opacity:0,duration:0.3,ease:'power2.out'})
+    .call(()=>{animIn(slides[idx],idx);busy=false});
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ')go(cur2+1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur2-1);
+});
+
+window.addEventListener('load',()=>{resetSlide(slides[0]);setTimeout(()=>animIn(slides[0],0),150);updateNav()});
+</script>
+</body>
+</html>
