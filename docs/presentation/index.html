@@ -110,6 +110,29 @@ h2 { font-size:clamp(32px,4.5vw,58px); font-weight:700; line-height:1.1; letter-
 blockquote { font-size:clamp(20px,3vw,32px); font-weight:600; line-height:1.4; position:relative; max-width:800px; margin:0 auto; padding:0 0 0 48px; opacity:0; }
 blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font-size:60px; color:var(--accent); font-family:Georgia,serif; line-height:1; }
 
+/* Timeline */
+.timeline { display:flex; flex-direction:column; gap:0; width:100%; max-width:800px; margin:0 auto; text-align:left; }
+.tl-node { display:flex; gap:20px; align-items:flex-start; opacity:0; }
+.tl-marker { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+.tl-dot { width:36px; height:36px; border-radius:50%; background:var(--surface); border:2px solid rgba(123,47,190,0.4); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--muted); flex-shrink:0; transition:all 0.3s; }
+.tl-node.done .tl-dot { background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.5); color:#10B981; }
+.tl-track { width:2px; height:32px; background:linear-gradient(to bottom,rgba(123,47,190,0.3),transparent); margin-top:4px; }
+.tl-node:last-child .tl-track { display:none; }
+.tl-body { padding:4px 0 32px; }
+.tl-date { font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+.tl-title { font-size:16px; font-weight:700; margin-bottom:4px; }
+.tl-desc { font-size:13px; color:var(--muted); line-height:1.55; }
+
+/* Team */
+.team-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:20px; width:100%; margin:8px auto 0; justify-content:center; }
+.team-card { background:var(--surface); border:1px solid rgba(123,47,190,0.25); border-radius:16px; padding:24px 20px; text-align:center; opacity:0; transition:border-color 0.3s; }
+.team-card:hover { border-color:rgba(245,166,35,0.4); }
+.team-avatar { width:64px; height:64px; border-radius:50%; object-fit:cover; margin:0 auto 12px; display:block; border:2px solid rgba(123,47,190,0.3); }
+.team-avatar-placeholder { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fff; margin:0 auto 12px; }
+.team-name { font-size:15px; font-weight:700; margin-bottom:4px; }
+.team-role { font-size:12px; color:var(--accent); font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; }
+.team-note { font-size:12px; color:var(--muted); line-height:1.5; }
+
 /* Text + Image */
 .body-text { font-size:16px; color:var(--muted); line-height:1.7; max-width:700px; margin:0 auto; opacity:0; }
 .img-wrap { margin-top:24px; opacity:0; }
@@ -119,8 +142,18 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 .dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.15); cursor:pointer; border:none; padding:0; transition:all 0.3s; }
 .dot.active { background:var(--accent); transform:scale(1.5); }
 #counter { position:fixed; bottom:28px; right:32px; font-size:12px; color:var(--muted); z-index:100; }
-#hint { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); font-size:11px; color:rgba(122,114,138,0.4); z-index:100; letter-spacing:0.05em; }
+#hint { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); font-size:11px; color:rgba(122,114,138,0.4); z-index:100; letter-spacing:0.05em; white-space:nowrap; }
+#mute-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:rgba(122,114,138,0.4); margin-left:8px; vertical-align:middle; transition:background 0.2s; }
+#mute-dot.active { background:var(--accent); }
 #overlay { position:fixed; inset:0; background:var(--bg); z-index:50; pointer-events:none; opacity:0; }
+
+/* Autoplay */
+#play-btn { position:fixed; bottom:20px; left:28px; z-index:100; background:rgba(123,47,190,0.15); border:1px solid rgba(123,47,190,0.4); border-radius:100px; padding:7px 16px 7px 12px; display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; font-weight:600; color:var(--primary-light); letter-spacing:0.05em; transition:background 0.2s,border-color 0.2s; }
+#play-btn:hover { background:rgba(123,47,190,0.28); border-color:rgba(123,47,190,0.7); }
+#play-btn svg { width:14px; height:14px; flex-shrink:0; }
+#play-btn.playing { background:rgba(245,166,35,0.12); border-color:rgba(245,166,35,0.4); color:var(--accent); }
+#play-btn.playing:hover { background:rgba(245,166,35,0.22); border-color:rgba(245,166,35,0.7); }
+#progress-bar { position:fixed; bottom:0; left:0; height:2px; width:0%; background:linear-gradient(90deg,var(--primary),var(--accent)); z-index:101; transition:none; }
 </style>
 </head>
 <body>
@@ -133,8 +166,8 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 <div id="slides">
 <div class="slide active" id="slide-1">
     
-    <div class="blob" style="width:420.19968170592296px;height:502.74226212930927px;background:var(--primary);top:-123.27209532745694px;right:-103.33144203404379px;opacity:0.07"></div>
-    <div class="blob" style="width:410.467020151808px;height:344.40882166424586px;background:var(--accent);bottom:-80.50142258975742px;right:-64.54397637543804px;opacity:0.06"></div>
+    <div class="blob" style="width:596.8113129138269px;height:435.3211607052565px;background:var(--primary);top:-108.2549433676742px;right:-105.21065895844843px;opacity:0.07"></div>
+    <div class="blob" style="width:410.002105690088px;height:396.04997360466774px;background:var(--accent);bottom:-115.42640414570418px;right:-54.36950466734065px;opacity:0.06"></div>
     <div class="slide-content">
       <div class="hero-badge">ARC Web</div>
       <h1>Clawlaunch<br><span class="grad">JavaScript</span></h1>
@@ -145,8 +178,8 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 
 <div class="slide" id="slide-2">
     
-    <div class="blob" style="width:489.09208321892186px;height:578.5669099124132px;background:var(--primary);top:-95.9142746202711px;right:-118.86471872914794px;opacity:0.07"></div>
-    <div class="blob" style="width:434.09205041535455px;height:312.8683633658559px;background:var(--accent);bottom:-63.68281598942355px;left:-65.66210343596691px;opacity:0.06"></div>
+    <div class="blob" style="width:400.6166315772885px;height:411.80630513715204px;background:var(--primary);top:-82.5077250531362px;left:-73.48244389737873px;opacity:0.07"></div>
+    <div class="blob" style="width:386.92751269811976px;height:430.86473549773575px;background:var(--accent);bottom:-63.91208666584632px;left:-61.198292459944156px;opacity:0.06"></div>
     <div class="slide-content">
       <div class="eyebrow">The problem</div>
       <h2>What's <span class="grad">broken</span> without this</h2>
@@ -172,8 +205,8 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 
 <div class="slide" id="slide-3">
     
-    <div class="blob" style="width:517.2919211996659px;height:565.9099078052348px;background:var(--primary);top:-128.77988690149664px;right:-102.93971082656574px;opacity:0.07"></div>
-    <div class="blob" style="width:340.8811108185821px;height:317.2299015980624px;background:var(--accent);bottom:-91.39828108253208px;right:-49.354662772817264px;opacity:0.06"></div>
+    <div class="blob" style="width:574.5722513028729px;height:418.3355167161144px;background:var(--primary);top:-139.09307915987688px;right:-97.70815129539422px;opacity:0.07"></div>
+    <div class="blob" style="width:327.5169895489715px;height:368.78963081068423px;background:var(--accent);bottom:-114.98847979282164px;right:-41.04328979998785px;opacity:0.06"></div>
     <div class="slide-content">
       <div class="eyebrow">The difference</div>
       <h2>Why it <span class="grad">matters</span></h2>
@@ -193,8 +226,8 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 
 <div class="slide" id="slide-4">
     
-    <div class="blob" style="width:597.0807433919803px;height:496.8459066395816px;background:var(--primary);top:-95.89951237048741px;right:-82.6253244943854px;opacity:0.07"></div>
-    <div class="blob" style="width:340.66741768126207px;height:325.26798352653407px;background:var(--accent);bottom:-110.82464013155712px;right:-65.21072557760974px;opacity:0.06"></div>
+    <div class="blob" style="width:534.5009561704317px;height:553.3461197091003px;background:var(--primary);top:-94.68875197228252px;right:-92.61684948775813px;opacity:0.07"></div>
+    <div class="blob" style="width:443.0107137505961px;height:343.2206907529616px;background:var(--accent);bottom:-116.62803624671551px;right:-61.73640352423879px;opacity:0.06"></div>
     <div class="slide-content">
       <div class="eyebrow">Under the hood</div>
       <h2>How it <span class="grad">works</span></h2>
@@ -229,8 +262,8 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 
 <div class="slide" id="slide-5">
     
-    <div class="blob" style="width:437.38183195776185px;height:495.11248983843257px;background:var(--primary);top:-147.2681665846975px;left:-86.75383772460006px;opacity:0.07"></div>
-    <div class="blob" style="width:445.28023736689903px;height:334.3152477833818px;background:var(--accent);bottom:-105.52435441033934px;left:-55.94512180002019px;opacity:0.06"></div>
+    <div class="blob" style="width:508.1175876441348px;height:469.69717371149903px;background:var(--primary);top:-89.73221586805155px;right:-64.24494226891689px;opacity:0.07"></div>
+    <div class="blob" style="width:361.01295101700424px;height:395.825150915049px;background:var(--accent);bottom:-62.04778262660231px;right:-75.72539713494685px;opacity:0.06"></div>
     <div class="slide-content">
       <div class="eyebrow">What it does</div>
       <h2>Core <span class="grad">capabilities</span></h2>
@@ -256,8 +289,8 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 
 <div class="slide" id="slide-6">
     
-    <div class="blob" style="width:451.68566483239414px;height:538.4095569193024px;background:var(--primary);top:-91.34935227503489px;right:-109.01699194605976px;opacity:0.07"></div>
-    <div class="blob" style="width:415.6693124739985px;height:368.03012567010046px;background:var(--accent);bottom:-101.98009020932345px;right:-40.33586321517091px;opacity:0.06"></div>
+    <div class="blob" style="width:501.56317396291774px;height:547.6390803575354px;background:var(--primary);top:-106.0106318353159px;right:-97.14163684854299px;opacity:0.07"></div>
+    <div class="blob" style="width:375.095341365019px;height:329.4446141507382px;background:var(--accent);bottom:-91.58349899555935px;right:-73.66500602676935px;opacity:0.06"></div>
     <div class="slide-content">
       <blockquote>I stopped paying $847/month for an agent that mostly runs shell commands and switched to Claude Max with a single setup command.</blockquote>
       <div class="line" style="margin-top:48px"></div>
@@ -267,8 +300,8 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 
 <div class="slide" id="slide-7">
     
-    <div class="blob" style="width:401.5912575661911px;height:549.7439801238897px;background:var(--primary);top:-116.68871673788789px;right:-111.34267712305615px;opacity:0.07"></div>
-    <div class="blob" style="width:365.9142097861396px;height:341.79264168266843px;background:var(--accent);bottom:-71.69880170684922px;right:-48.11062530462699px;opacity:0.06"></div>
+    <div class="blob" style="width:577.3975637853578px;height:413.1975446367797px;background:var(--primary);top:-120.21909189500741px;left:-114.05258030772356px;opacity:0.07"></div>
+    <div class="blob" style="width:361.1498525373894px;height:393.4928667708809px;background:var(--accent);bottom:-98.5336327103956px;right:-61.02891545713338px;opacity:0.06"></div>
     <div class="slide-content">
       <div class="eyebrow">Codebase</div>
       <h2>Built with <span class="grad">care</span></h2>
@@ -299,8 +332,8 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 
 <div class="slide" id="slide-8">
     
-    <div class="blob" style="width:405.54593490391056px;height:563.0392525583628px;background:var(--primary);top:-132.91981216497925px;left:-83.70004549499853px;opacity:0.07"></div>
-    <div class="blob" style="width:343.2778787164328px;height:442.3358714787689px;background:var(--accent);bottom:-108.06441637153578px;right:-61.46493578093292px;opacity:0.06"></div>
+    <div class="blob" style="width:567.8169316949213px;height:445.74442904782666px;background:var(--primary);top:-152.62733475013107px;right:-114.6852463307082px;opacity:0.07"></div>
+    <div class="blob" style="width:342.49663718696536px;height:326.1338988303258px;background:var(--accent);bottom:-90.21059199184012px;right:-61.70739763670658px;opacity:0.06"></div>
     <div class="slide-content">
       <div class="eyebrow">Built by</div>
       <h2>Mike Ensor<br><span class="grad">Arc Web</span></h2>
@@ -312,7 +345,13 @@ blockquote::before { content:'\201C'; position:absolute; left:0; top:-10px; font
 
 <div id="nav"></div>
 <div id="counter">1 / 8</div>
-<div id="hint">\u2190 \u2192 arrow keys to navigate</div>
+<div id="hint">\u2190 \u2192 arrow keys &nbsp;|&nbsp; P to play &nbsp;|&nbsp; M to mute<span id="mute-dot"></span></div>
+<div id="progress-bar"></div>
+<button id="play-btn" aria-label="Play slideshow" onclick="togglePlay()">
+  <svg id="play-icon" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
+  <svg id="pause-icon" viewBox="0 0 16 16" fill="currentColor" style="display:none"><rect x="2" y="1" width="4" height="14" rx="1"/><rect x="10" y="1" width="4" height="14" rx="1"/></svg>
+  <span id="play-label">Play</span>
+</button>
 
 <script>
 // Particles
@@ -339,7 +378,7 @@ for(let i=0;i<N;i++){const d=document.createElement('button');d.className='dot'+
 
 function updateNav(){document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===cur2));document.getElementById('counter').textContent=(cur2+1)+' / '+N}
 
-function resetSlide(s){const els=s.querySelectorAll('.eyebrow,.line,h1,h2,.sub,.card,.stat,.step,.compare-col,.code-block,blockquote,.hero-badge,.tags-row,.tag,.flow-step,.body-text,.img-wrap');gsap.set(els,{opacity:0,clearProps:'transform'})}
+function resetSlide(s){const els=s.querySelectorAll('.eyebrow,.line,h1,h2,.sub,.card,.stat,.step,.compare-col,.code-block,blockquote,.hero-badge,.tags-row,.tag,.flow-step,.body-text,.img-wrap,.tl-node,.team-card');gsap.set(els,{opacity:0,clearProps:'transform'})}
 
 function animIn(s,i){
   const q=sel=>s.querySelectorAll(sel);
@@ -352,11 +391,18 @@ function animIn(s,i){
     .to(q('.line'),{opacity:1,scaleX:1,duration:0.4,transformOrigin:'left'},'-=0.2').from(q('.line'),{scaleX:0},'<')
     .to(q('.tags-row'),{opacity:1,duration:0.4},'-=0.1');
 
-  const stagger=q('.card,.stat,.step,.flow-step');
-  if(stagger.length)tl.to(stagger,{opacity:1,y:0,duration:0.5,stagger:0.12},'-=0.1').from(stagger,{y:24},'<0.12');
+  const stagger=q('.card,.stat,.step,.flow-step,.tl-node,.team-card');
+  if(stagger.length){
+    tl.to(stagger,{opacity:1,y:0,duration:0.5,stagger:0.12},'-=0.1').from(stagger,{y:24},'<0.12');
+    const n=Math.min(stagger.length,4);
+    for(let k=0;k<n;k++)sndClink(0.4+k*0.12);
+  }
 
   const singles=q('.compare-col,.code-block,blockquote,.body-text,.img-wrap');
-  if(singles.length)tl.to(singles,{opacity:1,y:0,duration:0.6},'-=0.1').from(singles,{y:24},'<');
+  if(singles.length){
+    tl.to(singles,{opacity:1,y:0,duration:0.6},'-=0.1').from(singles,{y:24},'<');
+    sndClink(0.4);
+  }
 
   const tags=q('.tag');
   if(tags.length)tl.to(tags,{opacity:1,duration:0.3,stagger:0.08},'-=0.2');
@@ -364,6 +410,7 @@ function animIn(s,i){
 
 function go(idx){
   if(idx===cur2||busy||idx<0||idx>=N)return;busy=true;
+  sndTransition();
   const ov=document.getElementById('overlay');
   gsap.timeline()
     .to(ov,{opacity:1,duration:0.2,ease:'power2.in'})
@@ -373,11 +420,292 @@ function go(idx){
 }
 
 document.addEventListener('keydown',e=>{
-  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ')go(cur2+1);
-  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(cur2-1);
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){stopPlay();go(cur2+1);}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){stopPlay();go(cur2-1);}
+  if(e.key==='p'||e.key==='P')togglePlay();
+  if(e.key==='m'||e.key==='M')toggleMute();
 });
 
-window.addEventListener('load',()=>{resetSlide(slides[0]);setTimeout(()=>animIn(slides[0],0),150);updateNav()});
+// Audio engine (Web Audio API, zero external deps)
+let _ac=null,muted=false;
+function _ctx(){
+  if(!_ac)_ac=new(window.AudioContext||window.webkitAudioContext)();
+  if(_ac.state==='suspended')_ac.resume();
+  return _ac;
+}
+// unlock on first interaction
+['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{try{_ctx();}catch(e){}},{once:true,passive:true}));
+
+function sndTransition(){
+  if(muted)return;
+  try{
+    const a=_ctx(),t=a.currentTime;
+    // primary sweep: 180 -> 520 Hz sine
+    const o1=a.createOscillator(),g1=a.createGain();
+    o1.connect(g1);g1.connect(a.destination);
+    o1.type='sine';
+    o1.frequency.setValueAtTime(180,t);
+    o1.frequency.exponentialRampToValueAtTime(520,t+0.18);
+    g1.gain.setValueAtTime(0,t);g1.gain.linearRampToValueAtTime(0.055,t+0.02);
+    g1.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+    o1.start(t);o1.stop(t+0.3);
+    // detuned twin for richness
+    const o2=a.createOscillator(),g2=a.createGain();
+    o2.connect(g2);g2.connect(a.destination);
+    o2.type='sine';
+    o2.frequency.setValueAtTime(185,t);
+    o2.frequency.exponentialRampToValueAtTime(530,t+0.2);
+    g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(0.025,t+0.03);
+    g2.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+    o2.start(t);o2.stop(t+0.32);
+    // soft sub thud
+    const o3=a.createOscillator(),g3=a.createGain();
+    o3.connect(g3);g3.connect(a.destination);
+    o3.type='sine';o3.frequency.value=60;
+    g3.gain.setValueAtTime(0.05,t);g3.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+    o3.start(t);o3.stop(t+0.14);
+  }catch(e){}
+}
+
+function sndClink(delay){
+  if(muted)return;
+  try{
+    const a=_ctx(),t=a.currentTime+(delay||0);
+    const o=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain();
+    o.connect(f);f.connect(g);g.connect(a.destination);
+    f.type='bandpass';f.frequency.value=2400;f.Q.value=10;
+    o.type='triangle';
+    o.frequency.setValueAtTime(1900,t);
+    o.frequency.exponentialRampToValueAtTime(1200,t+0.07);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.045,t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.13);
+    o.start(t);o.stop(t+0.15);
+  }catch(e){}
+}
+
+function sndToggle(on){
+  if(muted)return;
+  try{
+    const a=_ctx();
+    const freqs=on?[400,640]:[640,400];
+    freqs.forEach((freq,i)=>{
+      const o=a.createOscillator(),g=a.createGain();
+      o.connect(g);g.connect(a.destination);
+      o.type='sine';o.frequency.value=freq;
+      const t=a.currentTime+i*0.065;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.04,t+0.006);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+      o.start(t);o.stop(t+0.1);
+    });
+  }catch(e){}
+}
+
+const muteDot=document.getElementById('mute-dot');
+function toggleMute(){
+  muted=!muted;
+  muteDot.classList.toggle('active',muted);
+  if(muted){stopDrone();}else{if(playing)startDrone();sndToggle(true);}
+}
+
+// ─── Meditation Drone ────────────────────────────────────────────────────────
+// Root: 136.1 Hz — the "Om" / Earth-year frequency (just-intonation anchor).
+// Harmonics built on pure integer ratios: octave 2:1, fifth 3:2, fourth 4:3.
+// Chord sequence moves slowly between two peaceful voicings every ~20 s:
+//   State A — open fifth (root + fifth)      warm, grounding
+//   State B — sus4 colour (root + fourth)    airy, open, unresolved peace
+// Binaural shimmer: each voice has a left and right oscillator detuned by 6 Hz
+//   (theta-range beating) — produces a gentle inner pulse felt more than heard.
+// Breathing LFO at 0.08 Hz (~12 s per cycle) swells volume like a slow breath.
+// Reverb: two-tap feedback delay (0.28 s / 0.47 s), lowpass at 900 Hz, 40% wet.
+
+const _OM   = 136.1;                  // root Hz
+const _5TH  = _OM  * 1.5;            // perfect fifth  (3:2)  = 204.15 Hz
+const _4TH  = _OM  * (4/3);          // perfect fourth (4:3)  = 181.47 Hz
+const _OCT  = _OM  * 2;              // octave  (2:1)         = 272.2  Hz
+const _SUB  = _OM  / 2;              // sub octave            = 68.05  Hz
+const _BIN  = 0.7;                   // binaural beat gap (Hz) — slow, smooth pulse
+
+// Chord states: array of {freq, vol} voice definitions
+const _CHORDS = [
+  // State A — open fifth: sub + root×2 + fifth + octave
+  [ {f:_SUB, v:0.20}, {f:_OM, v:0.45}, {f:_OM, v:0.28}, {f:_5TH, v:0.18}, {f:_OCT, v:0.10} ],
+  // State B — sus4 colour: sub + root×2 + fourth + octave
+  [ {f:_SUB, v:0.16}, {f:_OM, v:0.40}, {f:_OM, v:0.24}, {f:_4TH, v:0.22}, {f:_OCT, v:0.12} ],
+];
+const _CHORD_HOLD = 22;   // seconds per chord state
+const _MORPH_TIME = 8;    // seconds to crossfade between states
+
+let _drone=null;
+
+function startDrone(){
+  if(muted||_drone)return;
+  try{
+    const a=_ctx(),t=a.currentTime;
+
+    // master
+    const master=a.createGain();
+    master.connect(a.destination);
+    master.gain.setValueAtTime(0,t);
+    master.gain.linearRampToValueAtTime(0.075,t+3.0);
+
+    // breathing LFO — 0.028 Hz (~36 s cycle), depth ±0.004 — barely perceptible swell,
+    // just enough to prevent the drone feeling completely static
+    const breathOsc=a.createOscillator(),breathGain=a.createGain();
+    breathOsc.type='sine';breathOsc.frequency.value=0.028;breathGain.gain.value=0.004;
+    breathOsc.connect(breathGain);breathGain.connect(master.gain);breathOsc.start(t);
+
+    // reverb — two feedback delay taps through a shared lowpass
+    function makeTap(delayT,fbAmt){
+      const d=a.createDelay(2.0),fb=a.createGain(),lp=a.createBiquadFilter();
+      d.delayTime.value=delayT;fb.gain.value=fbAmt;
+      lp.type='lowpass';lp.frequency.value=900;
+      d.connect(lp);lp.connect(fb);fb.connect(d);
+      const w=a.createGain();w.gain.value=0.2;d.connect(w);w.connect(master);
+      return d; // input node
+    }
+    const tap1=makeTap(0.28,0.35);
+    const tap2=makeTap(0.47,0.28);
+
+    // per-voice gain nodes (one per voice slot, index matches _CHORDS rows)
+    const voiceGains=_CHORDS[0].map(({v})=>{
+      const g=a.createGain();g.gain.value=v;g.connect(master);g.connect(tap1);g.connect(tap2);return g;
+    });
+
+    // per-voice binaural pair: L oscillator at f, R oscillator at f+_BIN
+    // merged through a stereo splitter for the beating effect.
+    // Each voice also gets a slow pitch-drift LFO (different rates per voice so
+    // they never pulse in sync — organic shimmer, no amplitude pumping).
+    const _driftRates=[0.031,0.019,0.041,0.027,0.023]; // Hz — all prime-ish, never sync
+    const _driftDepths=[1.2,0.8,1.6,1.0,0.9];           // cents — microtonal, subliminal
+    const oscs=voiceGains.map((_,i)=>{
+      const merger=a.createChannelMerger(2);
+      const oL=a.createOscillator(),oR=a.createOscillator();
+      oL.type='sine';oR.type='sine';
+      // pitch drift via detune modulation
+      const driftOsc=a.createOscillator(),driftGain=a.createGain();
+      driftOsc.type='sine';driftOsc.frequency.value=_driftRates[i]||0.03;
+      driftGain.gain.value=_driftDepths[i]||3;
+      driftOsc.connect(driftGain);
+      driftGain.connect(oL.detune);driftGain.connect(oR.detune);
+      driftOsc.start(t+i*1.3); // stagger start so LFOs begin at different phases
+      oL.connect(merger,0,0);oR.connect(merger,0,1);
+      merger.connect(voiceGains[i]);
+      return {oL,oR,driftOsc};
+    });
+
+    // set initial frequencies and start
+    function applyChord(state,instant){
+      _CHORDS[state].forEach(({f,v},i)=>{
+        const {oL,oR}=oscs[i],ac=a.currentTime;
+        if(instant){
+          oL.frequency.setValueAtTime(f,ac);
+          oR.frequency.setValueAtTime(f+_BIN,ac);
+          voiceGains[i].gain.setValueAtTime(v,ac);
+        }else{
+          oL.frequency.exponentialRampToValueAtTime(f,ac+_MORPH_TIME);
+          oR.frequency.exponentialRampToValueAtTime(f+_BIN,ac+_MORPH_TIME);
+          voiceGains[i].gain.linearRampToValueAtTime(v,ac+_MORPH_TIME);
+        }
+      });
+    }
+    oscs.forEach(({oL,oR})=>{oL.start(t);oR.start(t);});
+    applyChord(0,true);
+
+    // chord cycle timer
+    let _chordState=0;
+    function cycleChord(){
+      _chordState=1-_chordState;
+      applyChord(_chordState,false);
+      _drone._cycleTimer=setTimeout(cycleChord,(_CHORD_HOLD+_MORPH_TIME)*1000);
+    }
+    const cycleTimer=setTimeout(cycleChord,_CHORD_HOLD*1000);
+
+    _drone={master,breathOsc,oscs,voiceGains,_cycleTimer:cycleTimer};
+  }catch(e){}
+}
+
+function stopDrone(){
+  if(!_drone)return;
+  try{
+    clearTimeout(_drone._cycleTimer);
+    const a=_ctx(),t=a.currentTime;
+    _drone.master.gain.cancelScheduledValues(t);
+    _drone.master.gain.setValueAtTime(_drone.master.gain.value,t);
+    _drone.master.gain.linearRampToValueAtTime(0,t+2.2);
+    const d=_drone;_drone=null;
+    setTimeout(()=>{
+      try{d.breathOsc.stop();d.oscs.forEach(({oL,oR,driftOsc})=>{oL.stop();oR.stop();driftOsc.stop();});}catch(e){}
+    },2400);
+  }catch(e){}
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Autoplay
+const AUTOPLAY_MS=5000;
+let playTimer=null,playRaf=null,playStart=null,playing=false;
+const pb=document.getElementById('progress-bar');
+const btn=document.getElementById('play-btn');
+const playIcon=document.getElementById('play-icon');
+const pauseIcon=document.getElementById('pause-icon');
+const playLabel=document.getElementById('play-label');
+
+function setPlayUI(on){
+  playing=on;
+  sndToggle(on);
+  btn.classList.toggle('playing',on);
+  playIcon.style.display=on?'none':'';
+  pauseIcon.style.display=on?'':'none';
+  playLabel.textContent=on?'Pause':'Play';
+  if(!on){pb.style.width='0%';pb.style.transition='none';}
+}
+
+function startProgress(){
+  playStart=performance.now();
+  function tick(){
+    if(!playing)return;
+    const pct=Math.min(100,(performance.now()-playStart)/AUTOPLAY_MS*100);
+    pb.style.transition='none';
+    pb.style.width=pct+'%';
+    if(pct<100){playRaf=requestAnimationFrame(tick);}
+  }
+  playRaf=requestAnimationFrame(tick);
+}
+
+function scheduleNext(){
+  playTimer=setTimeout(()=>{
+    if(!playing)return;
+    const next=(cur2+1)%N;
+    // wrap-around: pause at end instead of looping
+    if(next===0&&cur2===N-1){stopPlay();pb.style.width='0%';return;}
+    go(next);
+    pb.style.transition='none';pb.style.width='0%';
+    playStart=performance.now();
+    startProgress();
+    scheduleNext();
+  },AUTOPLAY_MS);
+}
+
+function startPlay(){
+  if(playing)return;
+  setPlayUI(true);
+  startDrone();
+  playStart=performance.now();
+  startProgress();
+  scheduleNext();
+}
+
+function stopPlay(){
+  if(!playing)return;
+  clearTimeout(playTimer);
+  cancelAnimationFrame(playRaf);
+  playTimer=null;playRaf=null;
+  setPlayUI(false);
+  stopDrone();
+}
+
+function togglePlay(){playing?stopPlay():startPlay();}
+
+window.addEventListener('load',()=>{resetSlide(slides[0]);setTimeout(()=>animIn(slides[0],0),150);updateNav();});
 </script>
 </body>
 </html>
